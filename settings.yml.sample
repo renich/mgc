@@ -1,0 +1,5 @@
+general:
+    key:        12345678-abcd-1234-dcba-123456789abc  
+    secret:     abcdefghijklmnopqrstuv/wlkjsdl+lksjj83747lKJkJSKDkjkjKJkjLKASLDKFJLASDJ8923K4JKJASLLJD== 
+    base:       https://data.mtgox.com/api/2/
+    debug:      false

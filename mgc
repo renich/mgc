@@ -1,0 +1,106 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+# Author: Renich Bon Ciric <renich@woralelandia.com>
+# Date: 20130604
+# License: GPLv3 @ http://www.gnu.org/licenses/gpl.txt
+# Description: This script should let you do stuff @ MtGox; with API v2.
+# Credits: nitrous_ @ irc://freenode.net/#mtgox actually made it work. Thanks a billion to him.
+
+require 'bundler'
+Bundler.require
+
+require 'base64'
+require 'open-uri'
+require 'openssl'
+require 'pp'
+require 'time'
+require 'zlib'
+
+require_relative 'lib/config/config'
+
+
+
+# settings
+config      = Settings.load( 'settings.yml' )
+key         = config[:general][:key]
+secret      = config[:general][:secret]
+base        = config[:general][:base]
+Debug       = config[:general][:debug]
+
+
+# functions
+def hmac_512( message, secret ) 
+    secret  = Base64.strict_decode64( secret )
+    hash    = OpenSSL::HMAC.digest( 'sha512', secret , message )
+    return Base64.strict_encode64( hash )
+end
+
+def help
+    puts <<EOF
+WARNING!! WARNING!! WARNING!!
+
+THIS TOOL IS 100% UNTESTED!! USE UNDER YOUR OWN RISK!
+
+MtGox CLI tool; supporting API v2. 
+Usage: mgc [PATH] [JSON String|JSON file]
+
+Renich Bon Ciric <renich@woralelandia.com>
+EOF
+
+end
+
+
+# TODO: handle short and long arguments better; make it more flexible
+# Parsing
+path        = ARGV.empty? ? 'BTCUSD/money/ticker_fast' : ARGV.shift
+data        = { :tonce => ( Time.now.to_f * 1e6 ).to_i.to_s }
+data        = data.merge( JSON.parse( ARGF.read ).to_hash ) unless ARGV.empty?
+data_str    = URI::encode_www_form( data )
+message     = path + "\0" + data_str
+
+
+# Logic
+req = hmac_512( message, secret )
+
+conn = Faraday.new( :url => 'https://data.mtgox.com/api/2/', :ssl => {:verify => false} ) do |f|
+    f.request  :url_encoded
+    f.response :logger if Debug
+    f.adapter  :net_http
+    f.headers['User-Agent']         = 'My First Trade Bot'
+    f.headers['Rest-Key']           = key
+    f.headers['Rest-Sign']          = req 
+    f.headers['Accept-Encoding']    = 'gzip'
+end
+
+response = conn.post do |r|
+    r.url path
+    r.body = data_str
+end
+
+if Debug
+    puts
+    puts 'Settings: '
+    puts 'key: ' + key
+    puts 'secret: ' + secret
+    puts 'base: ' + base
+    puts 'path: ' + path
+    print 'data (pretty print): '
+    pp data
+    puts 'message: ' + message
+    print 'message (pretty print): '
+    pp message
+
+    puts
+    puts 'Connection headers: '
+    pp conn.headers
+    puts ''
+
+    puts 'Response headers: '
+    pp response.headers
+    puts ''
+
+    puts 'Response body: '
+end
+
+# TODO: handle GZIP and Non-GZIP
+puts JSON.parse( Zlib::GzipReader.new( StringIO.new( response.body ), encoding: 'ASCII-8BIT' ).read ).to_json
