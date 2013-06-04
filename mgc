@@ -61,7 +61,7 @@ message     = path + "\0" + data_str
 # Logic
 req = hmac_512( message, secret )
 
-conn = Faraday.new( :url => 'https://data.mtgox.com/api/2/', :ssl => {:verify => false} ) do |f|
+conn = Faraday.new( :url => 'https://data.mtgox.com/api/2/' ) do |f|
     f.request  :url_encoded
     f.response :logger if Debug
     f.adapter  :net_http
