@@ -31,6 +31,10 @@ Try it out::
     ./mgc BTCUSD/money/info
     
     ./mgc money/merchant/order/create <( echo '{"currency":"BTC","amount":1}' )
+    
+    or
+    
+    ./mgc money/merchant/order/create path/to/file.json
 
 
 Improvements
