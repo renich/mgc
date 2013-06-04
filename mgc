@@ -19,7 +19,6 @@ require 'zlib'
 require_relative 'lib/config/config'
 
 
-
 # settings
 config      = Settings.load( 'settings.yml' )
 key         = config[:general][:key]
