@@ -10,6 +10,7 @@ require 'bundler'
 Bundler.require
 
 require 'base64'
+require 'getoptlong'
 require 'open-uri'
 require 'openssl'
 require 'pp'
@@ -24,7 +25,7 @@ config      = Settings.load( 'settings.yml' )
 key         = config[:general][:key]
 secret      = config[:general][:secret]
 base        = config[:general][:base]
-Debug       = config[:general][:debug]
+debug       = config[:general][:debug]
 
 
 # functions
@@ -36,12 +37,15 @@ end
 
 def help
     puts <<EOF
-WARNING!! WARNING!! WARNING!!
-
-THIS TOOL IS 100% UNTESTED!! USE UNDER YOUR OWN RISK!
-
 MtGox CLI tool; supporting API v2. 
-Usage: mgc [PATH] [JSON String|JSON file]
+Usage: mgc [OPTIONS]... [PATH] [JSON String|JSON file]
+
+Options:
+    --help,     -h      Display help
+    --verbose,  -v      Enables verbose output.
+
+WARNING!! WARNING!! WARNING!!
+THIS TOOL IS 100% UNTESTED!! USE UNDER YOUR OWN RISK!
 
 Renich Bon Ciric <renich@woralelandia.com>
 EOF
@@ -49,8 +53,22 @@ EOF
 end
 
 
-# TODO: handle short and long arguments better; make it more flexible
 # Parsing
+opts = GetoptLong.new(
+      [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
+      [ '--verbose', '-v', GetoptLong::NO_ARGUMENT ]
+)
+
+opts.each do |opt|
+    case opt
+    when '--help'
+        help
+        exit
+    when '--verbose'
+        debug = true
+    end
+end
+
 path        = ARGV.empty? ? 'BTCUSD/money/ticker_fast' : ARGV.shift
 data        = { :tonce => ( Time.now.to_f * 1e6 ).to_i.to_s }
 data        = data.merge( JSON.parse( ARGF.read ).to_hash ) unless ARGV.empty?
@@ -63,7 +81,7 @@ req = hmac_512( message, secret )
 
 conn = Faraday.new( :url => 'https://data.mtgox.com/api/2/' ) do |f|
     f.request  :url_encoded
-    f.response :logger if Debug
+    f.response :logger if debug
     f.adapter  :net_http
     f.headers['User-Agent']         = 'My First Trade Bot'
     f.headers['Rest-Key']           = key
@@ -76,7 +94,7 @@ response = conn.post do |r|
     r.body = data_str
 end
 
-if Debug
+if debug
     puts
     puts 'Settings: '
     puts 'key: ' + key
