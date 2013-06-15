@@ -136,5 +136,8 @@ if debug
     puts 'Response body: '
 end
 
-# TODO: handle GZIP and Non-GZIP
-puts JSON.parse( Zlib::GzipReader.new( StringIO.new( response.body ), encoding: 'ASCII-8BIT' ).read ).to_json
+begin
+    puts JSON.parse( Zlib::GzipReader.new( StringIO.new( response.body ), encoding: 'ASCII-8BIT' ).read ).to_json
+rescue
+    puts response.body
+end
