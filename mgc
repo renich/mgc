@@ -38,11 +38,28 @@ end
 def help
     puts <<EOF
 MtGox CLI tool; supporting API v2. 
-Usage: mgc [OPTIONS]... [PATH] [JSON String|JSON file]
+USAGE:
+    Usage: mgc [OPTIONS]... [PATH] [< <( echo 'JSON String' ) || JSON file]
 
-Options:
-    --help,     -h      Display help
-    --verbose,  -v      Enables verbose output.
+    Options:
+        --help,     -h      Display help
+        --verbose,  -v      Enables verbose output.
+
+
+EXAMPLES:
+
+    # get your accout unfo
+    ./mgc
+
+    # same as above
+    ./mgc BTCUSD/money/info
+
+    # create an order using merchant. Using valid JSON files is recommended.
+    ./mgc money/merchant/order/create path/to/file.json
+
+    # same as above; using a JSON string. Be very.
+    ./mgc money/merchant/order/create <( echo '{"currency":"BTC","amount":1}' )
+
 
 WARNING!! WARNING!! WARNING!!
 THIS TOOL IS 100% UNTESTED!! USE UNDER YOUR OWN RISK!
